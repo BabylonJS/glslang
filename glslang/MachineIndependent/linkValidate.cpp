@@ -658,7 +658,10 @@ void TIntermediate::mergeBlockDefinitions(TInfoSink& infoSink, TIntermSymbol* bl
 
         virtual void visitSymbol(TIntermSymbol* symbol)
         {
-            if (newSymbol->getAccessName() == symbol->getAccessName() &&
+            if (
+#ifndef GLSLANG_WEB
+                newSymbol->getAccessName() == symbol->getAccessName() &&
+#endif
                 newSymbol->getQualifier().getBlockStorage() == symbol->getQualifier().getBlockStorage()) {
                 // Each symbol node may have a local copy of the block structure.
                 // Update those structures to match the new one post-merge
@@ -778,17 +781,21 @@ void TIntermediate::mergeLinkerObjects(TInfoSink& infoSink, TIntermSequence& lin
                 error(infoSink, "Only one push_constant block is allowed per stage");
         }
 
+#ifndef GLSLANG_WEB
         // Check conflicts between preset primitives and sizes of I/O variables among multiple geometry shaders
         if (language == EShLangGeometry && unitStage == EShLangGeometry)
         {
             TIntermSymbol* unitSymbol = unitLinkerObjects[unitLinkObj]->getAsSymbolNode();
             if (unitSymbol->isArray() && unitSymbol->getQualifier().storage == EvqVaryingIn && unitSymbol->getQualifier().builtIn == EbvNone)
                 if ((unitSymbol->getArraySizes()->isImplicitlySized() &&
-                        unitSymbol->getArraySizes()->getImplicitSize() != TQualifier::mapGeometryToSize(getInputPrimitive())) ||
+                        unitSymbol->getArraySizes()->getImplicitSize() != 
+                        TQualifier::mapGeometryToSize(getInputPrimitive())
+                    ) ||
                     (! unitSymbol->getArraySizes()->isImplicitlySized() &&
                         unitSymbol->getArraySizes()->getDimSize(0) != TQualifier::mapGeometryToSize(getInputPrimitive())))
                     error(infoSink, "Not all array sizes match across all geometry shaders in the program");
         }
+#endif
 
         if (merge) {
             linkerObjects.push_back(unitLinkerObjects[unitLinkObj]);
@@ -1550,7 +1557,9 @@ void TIntermediate::checkCallGraphBodies(TInfoSink& infoSink, bool keepUncalled)
         for (int f = 0; f < (int)functionSequence.size(); ++f) {
             if (! reachable[f])
             {
+#ifndef GLSLANG_WEB
                 resetTopLevelUncalledStatus(functionSequence[f]->getAsAggregate()->getName());
+#endif
                 functionSequence[f] = nullptr;
             }
         }
@@ -1643,17 +1652,25 @@ int TIntermediate::addUsedLocation(const TQualifier& qualifier, const TType& typ
         set = 3;
     else if (qualifier.storage == EvqTileImageEXT)
         set = 4;
+#ifndef GLSLANG_WEB
     else if (qualifier.isAnyPayload())
         set = 0;
     else if (qualifier.isAnyCallable())
         set = 1;
     else if (qualifier.isHitObjectAttrNV())
         set = 2;
+#endif
     else
         return -1;
 
     int size;
-    if (qualifier.isAnyPayload() || qualifier.isAnyCallable()) {
+    if (
+#ifndef GLSLANG_WEB
+        qualifier.isAnyPayload() || qualifier.isAnyCallable()
+#else
+        false
+#endif
+       ) {
         size = 1;
     } else if (qualifier.isUniformOrBuffer() || qualifier.isTaskMemory()) {
         if (type.isSizedArray())

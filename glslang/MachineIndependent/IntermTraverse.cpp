@@ -70,13 +70,14 @@ void TIntermConstantUnion::traverse(TIntermTraverser *it)
 {
     it->visitConstantUnion(this);
 }
-
+#ifndef GLSLANG_WEB
 const TString& TIntermSymbol::getAccessName() const {
     if (getBasicType() == EbtBlock)
         return getType().getTypeName();
     else
         return getName();
 }
+#endif
 
 //
 // Traverse a binary node.

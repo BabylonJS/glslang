@@ -1402,7 +1402,13 @@ TIntermTyped* TParseContext::handleFunctionCall(const TSourceLoc& loc, TFunction
 #endif
                     const TType& argType = arg->getAsTyped()->getType();
                     const TQualifier& argQualifier = argType.getQualifier();
+                    
+#ifdef GLSLANG_WEB
+                    bool containsBindlessSampler = false;
+#else                    
                     bool containsBindlessSampler = intermediate.getBindlessMode() && argType.containsSampler();
+#endif
+                    
                     if (argQualifier.isMemory() && !containsBindlessSampler && (argType.containsOpaque() || argType.isReference())) {
                         const char* message = "argument cannot drop memory qualifier when passed to formal parameter";
 #ifndef GLSLANG_WEB
@@ -2337,6 +2343,7 @@ void TParseContext::builtInOpCheck(const TSourceLoc& loc, const TFunction& fnCan
 
             if (callNode.getOp() == EOpTextureOffset) {
                 TSampler s = arg0->getType().getSampler();
+                
                 if (s.is2D() && s.isArrayed() && s.isShadow()) {
                     if (isEsProfile())
                         error(loc, "TextureOffset does not support sampler2DArrayShadow : ", "sampler", "ES Profile");
@@ -2906,6 +2913,8 @@ TFunction* TParseContext::handleConstructorCall(const TSourceLoc& loc, const TPu
         profileRequires(loc, EEsProfile, 300, nullptr, "arrayed constructor");
     }
 
+
+#ifndef GLSLANG_WEB
     // Reuse EOpConstructTextureSampler for bindless image constructor
     // uvec2 imgHandle;
     // imageLoad(image1D(imgHandle), 0);
@@ -2913,6 +2922,7 @@ TFunction* TParseContext::handleConstructorCall(const TSourceLoc& loc, const TPu
     {
         intermediate.setBindlessImageMode(currentCaller, AstRefTypeFunc);
     }
+#endif
 
     TOperator op = intermediate.mapTypeToConstructorOp(type);
 
@@ -3647,6 +3657,7 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
         return true;
     }
     if (op != EOpConstructStruct && op != EOpConstructNonuniform && typed->getBasicType() == EbtSampler) {
+#ifndef GLSLANG_WEB
         if (op == EOpConstructUVec2 && extensionTurnedOn(E_GL_ARB_bindless_texture)) {
             intermediate.setBindlessTextureMode(currentCaller, AstRefTypeFunc);
         }
@@ -3654,6 +3665,10 @@ bool TParseContext::constructorError(const TSourceLoc& loc, TIntermNode* node, T
             error(loc, "cannot convert a sampler", constructorString.c_str(), "");
             return true;
         }
+#else
+        error(loc, "cannot convert a sampler", constructorString.c_str(), "");
+        return true;
+#endif
     }
     if (op != EOpConstructStruct && typed->isAtomic()) {
         error(loc, "cannot convert an atomic_uint", constructorString.c_str(), "");
@@ -3675,6 +3690,7 @@ bool TParseContext::constructorTextureSamplerError(const TSourceLoc& loc, const 
     const char* token = constructorName.c_str();
     // verify the constructor for bindless texture, the input must be ivec2 or uvec2
     if (function.getParamCount() == 1) {
+#ifndef GLSLANG_WEB
         TType* pType = function[0].type;
         TBasicType basicType = pType->getBasicType();
         bool isIntegerVec2 = ((basicType == EbtUint || basicType == EbtInt) && pType->getVectorSize() == 2);
@@ -3692,6 +3708,10 @@ bool TParseContext::constructorTextureSamplerError(const TSourceLoc& loc, const 
                 error(loc, "sampler-constructor requires the input to be ivec2 or uvec2", token, "");
             return true;
         }
+#else
+        error(loc, "sampler-constructor requires the input to be ivec2 or uvec2", token, "");
+        return true;
+#endif
     }
 
     // exactly two arguments needed
@@ -3790,6 +3810,7 @@ void TParseContext::samplerCheck(const TSourceLoc& loc, const TType& type, const
 
     if (type.getBasicType() == EbtStruct && containsFieldWithBasicType(type, EbtSampler)) {
         // For bindless texture, sampler can be declared as an struct member
+#ifndef GLSLANG_WEB
         if (extensionTurnedOn(E_GL_ARB_bindless_texture)) {
             if (type.getSampler().isImage())
                 intermediate.setBindlessImageMode(currentCaller, AstRefTypeVar);
@@ -3799,8 +3820,14 @@ void TParseContext::samplerCheck(const TSourceLoc& loc, const TType& type, const
         else {
             error(loc, "non-uniform struct contains a sampler or image:", type.getBasicTypeString().c_str(), identifier.c_str());
         }
+#else
+        error(loc, "non-uniform struct contains a sampler or image:", type.getBasicTypeString().c_str(),
+              identifier.c_str());
+#endif
     }
     else if (type.getBasicType() == EbtSampler && type.getQualifier().storage != EvqUniform) {
+       
+        #ifndef GLSLANG_WEB
         // For bindless texture, sampler can be declared as an input/output/block member
         if (extensionTurnedOn(E_GL_ARB_bindless_texture)) {
             if (type.getSampler().isImage())
@@ -3817,6 +3844,12 @@ void TParseContext::samplerCheck(const TSourceLoc& loc, const TType& type, const
              else if (type.getQualifier().storage != EvqTileImageEXT)
                  error(loc, "sampler/image types can only be used in uniform variables or function parameters:", type.getBasicTypeString().c_str(), identifier.c_str());
         }
+#else
+        if (type.getQualifier().storage != EvqTileImageEXT) {
+            error(loc, "sampler/image types can only be used in uniform variables or function parameters:",
+                  type.getBasicTypeString().c_str(), identifier.c_str());
+        }
+#endif
     }
 }
 
@@ -3918,10 +3951,11 @@ void TParseContext::globalQualifierFixCheck(const TSourceLoc& loc, TQualifier& q
         {
             requireExtensions(loc, 1, &E_GL_EXT_scalar_block_layout, "default std430 layout for uniform");
         }
-
+#ifndef GLSLANG_WEB
         if (publicType != nullptr && publicType->isImage() &&
             (qualifier.layoutFormat > ElfExtSizeGuard && qualifier.layoutFormat < ElfCount))
             qualifier.layoutFormat = mapLegacyLayoutFormat(qualifier.layoutFormat, publicType->sampler.getBasicType());
+#endif
 
         break;
     default:
@@ -4006,9 +4040,10 @@ void TParseContext::globalQualifierTypeCheck(const TSourceLoc& loc, const TQuali
 
     if (qualifier.isPatch() && qualifier.isInterpolation())
         error(loc, "cannot use interpolation qualifiers with patch", "patch", "");
-
+#ifndef GLSLANG_WEB
     if (qualifier.isTaskPayload() && publicType.basicType == EbtBlock)
         error(loc, "taskPayloadSharedEXT variables should not be declared as interface blocks", "taskPayloadSharedEXT", "");
+#endif
 
     if (qualifier.isTaskMemory() && publicType.basicType != EbtBlock)
         error(loc, "taskNV variables can be declared only as blocks", "taskNV", "");
@@ -4329,6 +4364,7 @@ void TParseContext::precisionQualifierCheck(const TSourceLoc& loc, TBasicType ba
 
 void TParseContext::parameterTypeCheck(const TSourceLoc& loc, TStorageQualifier qualifier, const TType& type)
 {
+#ifndef GLSLANG_WEB
     if ((qualifier == EvqOut || qualifier == EvqInOut) && type.isOpaque() && !intermediate.getBindlessMode())
         error(loc, "samplers and atomic_uints cannot be output parameters", type.getBasicTypeString().c_str(), "");
     if (!parsingBuiltins && type.contains16BitFloat())
@@ -4337,6 +4373,19 @@ void TParseContext::parameterTypeCheck(const TSourceLoc& loc, TStorageQualifier 
         requireInt16Arithmetic(loc, type.getBasicTypeString().c_str(), "(u)int16 types can only be in uniform block or buffer storage");
     if (!parsingBuiltins && type.contains8BitInt())
         requireInt8Arithmetic(loc, type.getBasicTypeString().c_str(), "(u)int8 types can only be in uniform block or buffer storage");
+#else
+    if ((qualifier == EvqOut || qualifier == EvqInOut) && type.isOpaque() && !false)
+        error(loc, "samplers and atomic_uints cannot be output parameters", type.getBasicTypeString().c_str(), "");
+    if (!parsingBuiltins && type.contains16BitFloat())
+        requireFloat16Arithmetic(loc, type.getBasicTypeString().c_str(),
+                                 "float16 types can only be in uniform block or buffer storage");
+    if (!parsingBuiltins && type.contains16BitInt())
+        requireInt16Arithmetic(loc, type.getBasicTypeString().c_str(),
+                               "(u)int16 types can only be in uniform block or buffer storage");
+    if (!parsingBuiltins && type.contains8BitInt())
+        requireInt8Arithmetic(loc, type.getBasicTypeString().c_str(),
+                              "(u)int8 types can only be in uniform block or buffer storage");
+#endif
 }
 
 bool TParseContext::containsFieldWithBasicType(const TType& type, TBasicType basicType)
@@ -5232,8 +5281,8 @@ void TParseContext::paramCheckFix(const TSourceLoc& loc, const TQualifier& quali
             type.getQualifier().setSpirvLiteral();
         else
             error(loc, "cannot use spirv_literal qualifier", type.getBasicTypeString().c_str(), "");
-#endif
     }
+#endif
 
     paramCheckFixStorage(loc, qualifier.storage, type);
 }
@@ -5473,7 +5522,6 @@ void TParseContext::arrayLimitCheck(const TSourceLoc& loc, const TString& identi
     else if (identifier.compare("gl_CullDistancePerViewNV") == 0)
         limitCheck(loc, size, "gl_MaxCullDistances", "gl_CullDistancePerViewNV array size");
 }
-#endif // GLSLANG_WEB
 
 // See if the provided value is less than or equal to the symbol indicated by limit,
 // which should be a constant in the symbol table.
@@ -5482,10 +5530,14 @@ void TParseContext::limitCheck(const TSourceLoc& loc, int value, const char* lim
     TSymbol* symbol = symbolTable.find(limit);
     assert(symbol->getAsVariable());
     const TConstUnionArray& constArray = symbol->getAsVariable()->getConstArray();
-    assert(! constArray.empty());
+    assert(!constArray.empty());
     if (value > constArray[0].getIConst())
         error(loc, "must be less than or equal to", feature, "%s (%d)", limit, constArray[0].getIConst());
 }
+
+#endif // GLSLANG_WEB
+
+
 
 #ifndef GLSLANG_WEB
 
@@ -8508,7 +8560,9 @@ void TParseContext::updateBindlessQualifier(TType& memberType)
                 updateBindlessQualifier(*subMemberType);
             }
         }
-        else if (memberType.getSampler().isImage()) {
+#ifndef GLSLANG_WEB
+        else if (memberType.getSampler().isImage()) 
+        {
             intermediate.setBindlessImageMode(currentCaller, AstRefTypeLayout);
             memberType.getQualifier().layoutBindlessImage = true;
         }
@@ -8516,6 +8570,7 @@ void TParseContext::updateBindlessQualifier(TType& memberType)
             intermediate.setBindlessTextureMode(currentCaller, AstRefTypeLayout);
             memberType.getQualifier().layoutBindlessSampler = true;
         }
+#endif
     }
 }
 

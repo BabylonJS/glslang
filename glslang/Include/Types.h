@@ -88,6 +88,7 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
 
 #ifdef GLSLANG_WEB
     bool is1D()          const { return false; }
+    bool is2D()          const { return dim == Esd2D; }
     bool isBuffer()      const { return false; }
     bool isRect()        const { return false; }
     bool isSubpass()     const { return false; }
@@ -552,7 +553,6 @@ public:
         clearMemory();
         specConstant = false;
         nonUniform = false;
-        nullInit = false;
         defaultBlock = false;
         clearLayout();
 #ifndef GLSLANG_WEB
@@ -560,6 +560,7 @@ public:
         spirvDecorate = nullptr;
         spirvByReference = false;
         spirvLiteral = false;
+        nullInit = false;
 #endif
     }
 
@@ -584,8 +585,8 @@ public:
         perPrimitiveNV = false;
         perViewNV = false;
         perTaskNV = false;
-#endif
         pervertexEXT = false;
+#endif
     }
 
     void clearMemory()
@@ -638,7 +639,7 @@ public:
     bool isNoContraction() const { return false; }
     void setNoContraction() { }
     bool isPervertexNV() const { return false; }
-    bool isPervertexEXT() const { return pervertexEXT; }
+    bool isPervertexEXT() const { return false; }
     void setNullInit() {}
     bool isNullInit() const { return false; }
     void setSpirvByReference() { }
@@ -1426,6 +1427,7 @@ struct TShaderQualifiers {
     TLayoutStencil getStencil() const { return layoutStencil; }
 #else
     TLayoutDepth getDepth() const { return EldNone; }
+    TLayoutStencil getStencil() const { return ElsNone; }
 #endif
 
     void init()
@@ -1960,8 +1962,14 @@ public:
     virtual bool isImage() const { return basicType == EbtSampler && getSampler().isImage(); }
     virtual bool isSubpass() const { return basicType == EbtSampler && getSampler().isSubpass(); }
     virtual bool isTexture() const { return basicType == EbtSampler && getSampler().isTexture(); }
+
+#ifdef GLSLANG_WEB
+    virtual bool isBindlessImage() const { return false; }
+    virtual bool isBindlessTexture() const { return false; }
+#else
     virtual bool isBindlessImage() const { return isImage() && qualifier.layoutBindlessImage; }
     virtual bool isBindlessTexture() const { return isTexture() && qualifier.layoutBindlessSampler; }
+#endif
     // Check the block-name convention of creating a block without populating it's members:
     virtual bool isUnusableName() const { return isStruct() && structure == nullptr; }
     virtual bool isParameterized()  const { return typeParameters != nullptr; }
@@ -2249,7 +2257,11 @@ public:
     }
 
 #ifdef GLSLANG_WEB
-    TString getCompleteString() const { return ""; }
+    TString getCompleteString(bool syntactic = false, bool getQualifiers = true, bool getPrecision = true,
+                              bool getType = true, TString name = "", TString structName = "") const
+    {
+        return "";
+    }
     const char* getStorageQualifierString() const { return ""; }
     const char* getBuiltInVariableString() const { return ""; }
     const char* getPrecisionQualifierString() const { return ""; }

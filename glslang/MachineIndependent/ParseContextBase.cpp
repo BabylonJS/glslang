@@ -218,16 +218,29 @@ bool TParseContextBase::lValueErrorCheck(const TSourceLoc& loc, const char* op, 
     //
     const TIntermTyped* leftMostTypeNode = TIntermediate::findLValueBase(node, true);
 
-    if (symNode)
+    if (symNode) 
+    {
         error(loc, " l-value required", op, "\"%s\" (%s)", symbol, message);
-    else
-        if (binaryNode && binaryNode->getAsOperator()->getOp() == EOpIndexDirectStruct)
-            if(IsAnonymous(leftMostTypeNode->getAsSymbolNode()->getName()))
-                error(loc, " l-value required", op, "\"%s\" (%s)", leftMostTypeNode->getAsSymbolNode()->getAccessName().c_str(), message);
-            else
-                error(loc, " l-value required", op, "\"%s\" (%s)", leftMostTypeNode->getAsSymbolNode()->getName().c_str(), message);
-        else
-            error(loc, " l-value required", op, "(%s)", message);
+    } else if (binaryNode && binaryNode->getAsOperator()->getOp() == EOpIndexDirectStruct) 
+    {
+        if (IsAnonymous(leftMostTypeNode->getAsSymbolNode()->getName())) 
+        {
+            error(loc, " l-value required", op, "\"%s\" (%s)",
+#ifndef GLSLANG_WEB
+                  leftMostTypeNode->getAsSymbolNode()->getAccessName().c_str(),
+#else
+                  "",
+#endif
+                message);
+        } else {
+            error(loc, " l-value required", op, "\"%s\" (%s)", leftMostTypeNode->getAsSymbolNode()->getName().c_str(),
+                  message);
+        }
+    }
+    else 
+    {
+        error(loc, " l-value required", op, "(%s)", message);
+    }
 
     return true;
 }
@@ -249,8 +262,15 @@ void TParseContextBase::rValueErrorCheck(const TSourceLoc& loc, const char* op, 
         else if (binaryNode &&
                 (binaryNode->getAsOperator()->getOp() == EOpIndexDirectStruct ||
                  binaryNode->getAsOperator()->getOp() == EOpIndexDirect))
-            if(IsAnonymous(leftMostTypeNode->getAsSymbolNode()->getName()))
-                error(loc, "can't read from writeonly object: ", op, leftMostTypeNode->getAsSymbolNode()->getAccessName().c_str());
+            if (IsAnonymous(leftMostTypeNode->getAsSymbolNode()->getName())) {
+                error(loc, "can't read from writeonly object: ", op,
+#ifndef GLSLANG_WEB
+                      leftMostTypeNode->getAsSymbolNode()->getAccessName().c_str()
+#else
+                      ""
+#endif
+                );
+            }
             else
                 error(loc, "can't read from writeonly object: ", op, leftMostTypeNode->getAsSymbolNode()->getName().c_str());
         else

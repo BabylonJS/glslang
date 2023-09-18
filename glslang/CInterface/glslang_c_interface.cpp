@@ -453,10 +453,9 @@ GLSLANG_EXPORT void glslang_program_set_source_file(glslang_program_t* program, 
     intermediate->setSourceFile(file);
 }
 
-GLSLANG_EXPORT int glslang_program_map_io(glslang_program_t* program)
-{
-    return (int)program->program->mapIO();
-}
+#if !defined(GLSLANG_WEB)
+GLSLANG_EXPORT int glslang_program_map_io(glslang_program_t* program) { return (int)program->program->mapIO(); }
+#endif // ! 
 
 GLSLANG_EXPORT const char* glslang_program_get_info_log(glslang_program_t* program)
 {

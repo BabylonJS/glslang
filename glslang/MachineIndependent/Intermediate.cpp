@@ -1676,6 +1676,7 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             isFPConversion(from, to) ||
             isFPIntegralConversion(from, to)) {
 
+#ifndef GLSLANG_WEB
             if (numericFeatures.contains(TNumericFeatures::shader_explicit_arithmetic_types) ||
                 numericFeatures.contains(TNumericFeatures::shader_explicit_arithmetic_types_int8) ||
                 numericFeatures.contains(TNumericFeatures::shader_explicit_arithmetic_types_int16) ||
@@ -1686,6 +1687,9 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
                 numericFeatures.contains(TNumericFeatures::shader_explicit_arithmetic_types_float64)) {
                 return true;
             }
+#else
+            return false;
+#endif
         }
     }
 
@@ -1695,14 +1699,22 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
                 switch (from) {
                 case EbtInt:
                 case EbtUint:
+#ifndef GLSLANG_WEB
                     return numericFeatures.contains(TNumericFeatures::shader_implicit_conversions);
+#else
+                    return false;
+#endif
                 default:
                     return false;
                 }
             case EbtUint:
                 switch (from) {
                 case EbtInt:
+#ifndef GLSLANG_WEB
                     return numericFeatures.contains(TNumericFeatures::shader_implicit_conversions);
+#else
+                    return false;
+#endif
                 default:
                     return false;
                 }
@@ -1718,14 +1730,26 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             case EbtInt64:
             case EbtUint64:
             case EbtFloat:
+#ifndef GLSLANG_WEB
                 return version >= 400 || numericFeatures.contains(TNumericFeatures::gpu_shader_fp64);
+#else
+                return false;
+#endif
             case EbtInt16:
             case EbtUint16:
+#ifndef GLSLANG_WEB
                 return (version >= 400 || numericFeatures.contains(TNumericFeatures::gpu_shader_fp64)) &&
                                           numericFeatures.contains(TNumericFeatures::gpu_shader_int16);
+#else
+                return false;
+#endif
             case EbtFloat16:
+#ifndef GLSLANG_WEB
                 return (version >= 400 || numericFeatures.contains(TNumericFeatures::gpu_shader_fp64)) &&
                                           numericFeatures.contains(TNumericFeatures::gpu_shader_half_float);
+#else
+                return false;
+#endif
             default:
                 return false;
            }
@@ -1738,10 +1762,18 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
                  return getSource() == EShSourceHlsl;
             case EbtInt16:
             case EbtUint16:
+#ifndef GLSLANG_WEB
                 return numericFeatures.contains(TNumericFeatures::gpu_shader_int16);
+#else
+                return false;
+#endif
             case EbtFloat16:
+#ifndef GLSLANG_WEB
                 return numericFeatures.contains(TNumericFeatures::gpu_shader_half_float) ||
                     getSource() == EShSourceHlsl;
+#else
+                return false;
+#endif
             default:
                  return false;
             }
@@ -1753,7 +1785,11 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
                 return getSource() == EShSourceHlsl;
             case EbtInt16:
             case EbtUint16:
+#ifndef GLSLANG_WEB
                 return numericFeatures.contains(TNumericFeatures::gpu_shader_int16);
+#else
+                return false;
+#endif
             default:
                 return false;
             }
@@ -1762,7 +1798,11 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             case EbtBool:
                 return getSource() == EShSourceHlsl;
             case EbtInt16:
+#ifndef GLSLANG_WEB
                 return numericFeatures.contains(TNumericFeatures::gpu_shader_int16);
+#else
+                return false;
+#endif
             default:
                 return false;
             }
@@ -1774,7 +1814,11 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
                 return true;
             case EbtInt16:
             case EbtUint16:
+#ifndef GLSLANG_WEB
                 return numericFeatures.contains(TNumericFeatures::gpu_shader_int16);
+#else
+                return false;
+#endif
             default:
                 return false;
             }
@@ -1783,7 +1827,11 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             case EbtInt:
                 return true;
             case EbtInt16:
+#ifndef GLSLANG_WEB
                 return numericFeatures.contains(TNumericFeatures::gpu_shader_int16);
+#else
+                return false;
+#endif
             default:
                 return false;
             }
@@ -1791,7 +1839,11 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
             switch (from) {
             case EbtInt16:
             case EbtUint16:
+#ifndef GLSLANG_WEB
                 return numericFeatures.contains(TNumericFeatures::gpu_shader_int16);
+#else
+                return false;
+#endif
             default:
                 break;
             }
@@ -1799,7 +1851,11 @@ bool TIntermediate::canImplicitlyPromote(TBasicType from, TBasicType to, TOperat
         case EbtUint16:
             switch (from) {
             case EbtInt16:
+#ifndef GLSLANG_WEB
                 return numericFeatures.contains(TNumericFeatures::gpu_shader_int16);
+#else
+                return false;
+#endif
             default:
                 break;
             }
@@ -1932,7 +1988,14 @@ std::tuple<TBasicType, TBasicType> TIntermediate::getConversionDestinationType(T
     TBasicType res1 = EbtNumTypes;
 
     if ((isEsProfile() && 
-        (version < 310 || !numericFeatures.contains(TNumericFeatures::shader_implicit_conversions))) || 
+        (version < 310 ||
+#ifndef GLSLANG_WEB
+            !numericFeatures.contains(TNumericFeatures::shader_implicit_conversions)
+#else
+            true
+#endif
+        )) 
+        || 
         version == 110)
         return std::make_tuple(res0, res1);
 
