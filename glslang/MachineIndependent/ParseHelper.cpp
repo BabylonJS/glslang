@@ -6681,7 +6681,11 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
 
     // Image format
     if (qualifier.hasFormat()) {
-        if (! type.isImage() && !intermediate.getBindlessImageMode())
+        if (! type.isImage() 
+#ifndef GLSLANG_WEB
+            && !intermediate.getBindlessImageMode()
+#endif
+            )
             error(loc, "only apply to images", TQualifier::getLayoutFormatString(qualifier.getFormat()), "");
         else {
             if (type.getSampler().type == EbtFloat && qualifier.getFormat() > ElfFloatGuard)
@@ -6700,7 +6704,11 @@ void TParseContext::layoutTypeCheck(const TSourceLoc& loc, const TType& type)
                 }
             }
         }
-    } else if (type.isImage() && ! qualifier.isWriteOnly() && !intermediate.getBindlessImageMode()) {
+    } else if (type.isImage() && ! qualifier.isWriteOnly() 
+#ifndef GLSLANG_WEB
+        && !intermediate.getBindlessImageMode()
+#endif
+        ) {
         const char *explanation = "image variables not declared 'writeonly' and without a format layout qualifier";
         requireProfile(loc, ECoreProfile | ECompatibilityProfile, explanation);
         profileRequires(loc, ECoreProfile | ECompatibilityProfile, 0, E_GL_EXT_shader_image_load_formatted, explanation);
@@ -9186,6 +9194,7 @@ void TParseContext::fixBlockUniformLayoutMatrix(TQualifier& qualifier, TTypeList
             }
         }
 
+#ifndef GLSLANG_WEB
         if ((*originTypeList)[member].type->getBasicType() == EbtStruct) {
             TQualifier* memberQualifier = nullptr;
             // block member can be declare a matrix style, so it should be update to the member's style
@@ -9210,6 +9219,7 @@ void TParseContext::fixBlockUniformLayoutMatrix(TQualifier& qualifier, TTypeList
                 (*tmpTypeList)[member].type->setStruct(const_cast<TTypeList*>(structure));
             }
         }
+#endif
     }
 }
 
@@ -9236,6 +9246,7 @@ void TParseContext::fixBlockUniformLayoutPacking(TQualifier& qualifier, TTypeLis
             }
         }
 
+#ifndef GLSLANG_WEB
         if ((*originTypeList)[member].type->getBasicType() == EbtStruct) {
             // Deep copy the type in pool.
             // Because, struct use in different block may have different layout qualifier.
@@ -9255,6 +9266,7 @@ void TParseContext::fixBlockUniformLayoutPacking(TQualifier& qualifier, TTypeLis
                 (*tmpTypeList)[member].type->setStruct(const_cast<TTypeList*>(structure));
             }
         }
+#endif
     }
 }
 

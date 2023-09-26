@@ -546,9 +546,12 @@ union YYSTYPE
             glslang::TIntermNodePair nodePair;
             glslang::TIntermTyped* intermTypedNode;
             glslang::TAttributes* attributes;
+
+#ifndef GLSLANG_WEB
             glslang::TSpirvRequirement* spirvReq;
             glslang::TSpirvInstruction* spirvInst;
             glslang::TSpirvTypeParameters* spirvTypeParams;
+#endif
         };
         union {
             glslang::TPublicType type;

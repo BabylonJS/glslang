@@ -69,10 +69,9 @@ option(ENABLE_GLSLANG_BINARIES "Builds glslang and spirv-remap" ON)
 
 option(ENABLE_GLSLANG_JS
     "If using Emscripten, build glslang.js. Otherwise, builds a sample executable for binary-size testing." OFF)
-CMAKE_DEPENDENT_OPTION(ENABLE_GLSLANG_WEBMIN
-    "Reduces glslang to minimum needed for web use"
-    OFF "ENABLE_GLSLANG_JS"
-    OFF)
+
+option(ENABLE_GLSLANG_WEBMIN "Reduces glslang to minimum needed for web use" OFF)
+
 CMAKE_DEPENDENT_OPTION(ENABLE_GLSLANG_WEBMIN_DEVEL
     "For ENABLE_GLSLANG_WEBMIN builds, enables compilation error messages"
     OFF "ENABLE_GLSLANG_WEBMIN"

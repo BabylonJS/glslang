@@ -638,8 +638,8 @@ spv::Builder::AccessChain::CoherentFlags TGlslangToSpvTraverser::TranslateCohere
                        flags.anyCoherent() ||
                        flags.volatil;
     flags.isImage = type.getBasicType() == glslang::EbtSampler;
-#endif
     flags.nonUniform = type.getQualifier().nonUniform;
+#endif
     return flags;
 }
 
