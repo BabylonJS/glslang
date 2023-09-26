@@ -1069,9 +1069,8 @@ TIntermTyped* TIntermediate::addConversion(TOperator op, const TType& type, TInt
     case EOpConstructUint16:
     case EOpConstructInt64:
     case EOpConstructUint64:
-        break;
-
 #endif
+        break;
 
     //
     // Implicit conversions
