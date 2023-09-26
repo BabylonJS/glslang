@@ -1322,7 +1322,11 @@ spv::StorageClass TGlslangToSpvTraverser::TranslateStorageClass(const glslang::T
             type.getQualifier().storage == glslang::EvqUniform) {
         if (type.isAtomic())
             return spv::StorageClassAtomicCounter;
-        if (type.containsOpaque() && !glslangIntermediate->getBindlessMode())
+        if (type.containsOpaque()
+#ifndef GLSLANG_WEB
+            && !glslangIntermediate->getBindlessMode()
+#endif
+            )
             return spv::StorageClassUniformConstant;
     }
 
@@ -1650,12 +1654,12 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(unsigned int spvVersion,
         builder.addCapability(spv::CapabilityTransformFeedback);
         builder.addExecutionMode(shaderEntry, spv::ExecutionModeXfb);
     }
-
+    
+#ifndef GLSLANG_WEB
     if (glslangIntermediate->getLayoutPrimitiveCulling()) {
         builder.addCapability(spv::CapabilityRayTraversalPrimitiveCullingKHR);
     }
 
-#ifndef GLSLANG_WEB
     if (glslangIntermediate->getSubgroupUniformControlFlow()) {
         builder.addExtension(spv::E_SPV_KHR_subgroup_uniform_control_flow);
         builder.addExecutionMode(shaderEntry, spv::ExecutionModeSubgroupUniformControlFlowKHR);
@@ -1681,11 +1685,13 @@ TGlslangToSpvTraverser::TGlslangToSpvTraverser(unsigned int spvVersion,
         if (glslangIntermediate->getEarlyFragmentTests())
             builder.addExecutionMode(shaderEntry, spv::ExecutionModeEarlyFragmentTests);
 
+#ifndef GLSLANG_WEB
         if (glslangIntermediate->getEarlyAndLateFragmentTestsAMD())
         {
             builder.addExecutionMode(shaderEntry, spv::ExecutionModeEarlyAndLateFragmentTestsAMD);
             builder.addExtension(spv::E_SPV_AMD_shader_early_and_late_fragment_tests);
         }
+#endif
 
         if (glslangIntermediate->getPostDepthCoverage()) {
             builder.addCapability(spv::CapabilitySampleMaskPostDepthCoverage);
@@ -2058,8 +2064,10 @@ void TGlslangToSpvTraverser::visitSymbol(glslang::TIntermSymbol* symbol)
     // Formal function parameters were mapped during makeFunctions().
     spv::Id id = getSymbolId(symbol);
 
+#ifndef GLSLANG_WEB
     if (symbol->getType().getQualifier().isTaskPayload())
         taskPayloadID = id; // cache the taskPayloadID to be used it as operand for OpEmitMeshTasksEXT
+#endif
 
     if (builder.isPointer(id)) {
         if (!symbol->getType().getQualifier().isParamInput() &&
@@ -2239,7 +2247,9 @@ bool TGlslangToSpvTraverser::visitBinary(glslang::TVisit /* visit */, glslang::T
                 node->getOp() == glslang::EOpIndexDirect) {
                 // Swizzle is uniform so propagate uniform into access chain
                 spv::Builder::AccessChain::CoherentFlags coherentFlags = TranslateCoherent(node->getLeft()->getType());
+#ifndef GLSLANG_WEB
                 coherentFlags.nonUniform = 0;
+#endif
                 // This is essentially a hard-coded vector swizzle of size 1,
                 // so short circuit the access-chain stuff with a swizzle.
                 std::vector<unsigned> swizzle;
@@ -2280,7 +2290,10 @@ bool TGlslangToSpvTraverser::visitBinary(glslang::TVisit /* visit */, glslang::T
                 // Struct reference propagates uniform lvalue
                 spv::Builder::AccessChain::CoherentFlags coherentFlags =
                         TranslateCoherent(node->getLeft()->getType());
+
+#ifndef GLSLANG_WEB
                 coherentFlags.nonUniform = 0;
+#endif
 
                 // normal case for indexing array or structure or block
                 builder.accessChainPush(builder.makeIntConstant(spvIndex),
@@ -2321,7 +2334,10 @@ bool TGlslangToSpvTraverser::visitBinary(glslang::TVisit /* visit */, glslang::T
             // Only if index is nonUniform should we propagate nonUniform into access chain
             spv::Builder::AccessChain::CoherentFlags index_flags = TranslateCoherent(node->getRight()->getType());
             spv::Builder::AccessChain::CoherentFlags coherent_flags = TranslateCoherent(node->getLeft()->getType());
+
+#ifndef GLSLANG_WEB
             coherent_flags.nonUniform = index_flags.nonUniform;
+#endif
 
             if (! node->getLeft()->getType().isArray() && node->getLeft()->getType().isVector()) {
                 int dummySize;
@@ -4500,13 +4516,14 @@ spv::Id TGlslangToSpvTraverser::convertGlslangToSpvType(const glslang::TType& ty
     case glslang::EbtString:
         // no type used for OpString
         return 0;
-
+#ifndef GLSLANG_WEB
     case glslang::EbtHitObjectNV: {
         builder.addExtension(spv::E_SPV_NV_shader_invocation_reorder);
         builder.addCapability(spv::CapabilityShaderInvocationReorderNV);
         spvType = builder.makeHitObjectNVType();
     }
     break;
+#endif
 #ifndef GLSLANG_WEB
     case glslang::EbtSpirvType: {
         // GL_EXT_spirv_intrinsics
@@ -4943,8 +4960,10 @@ void TGlslangToSpvTraverser::decorateStructType(const glslang::TType& type,
         }
     }
 
+#ifndef GLSLANG_WEB
     if (qualifier.hasHitObjectShaderRecordNV())
         builder.addDecoration(spvType, spv::DecorationHitObjectShaderRecordBufferNV);
+#endif
 }
 
 // Turn the expression forming the array size into an id.
@@ -5325,7 +5344,11 @@ bool TGlslangToSpvTraverser::originalParam(glslang::TStorageQualifier qualifier,
         return true;
     if (glslangIntermediate->getSource() == glslang::EShSourceHlsl)
         return paramType.getBasicType() == glslang::EbtBlock;
-    return (paramType.containsOpaque() && !glslangIntermediate->getBindlessMode()) ||       // sampler, etc.
+    return (paramType.containsOpaque() 
+#ifndef GLSLANG_WEB
+        && !glslangIntermediate->getBindlessMode()
+#endif
+        ) ||       // sampler, etc.
 #ifndef GLSLANG_WEB
            paramType.getQualifier().isSpirvByReference() ||                                    // spirv_by_reference
 #endif
