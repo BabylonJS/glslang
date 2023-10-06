@@ -47,9 +47,9 @@ public:
     SpvBuildLogger() {}
 
 #ifdef GLSLANG_WEB
-    void tbdFunctionality(const std::string& f) { }
-    void missingFunctionality(const std::string& f) { }
-    void warning(const std::string& w) { }
+    void tbdFunctionality(const std::string&) { }
+    void missingFunctionality(const std::string&) { }
+    void warning(const std::string&) { }
     void error(const std::string& e) { errors.push_back(e); }
     std::string getAllMessages() { return ""; }
 #else

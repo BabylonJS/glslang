@@ -637,7 +637,7 @@ public:
                localSizeSpecId[2] != TQualifier::layoutNotSet;
     }
 #ifdef GLSLANG_WEB
-    void output(TInfoSink&, bool tree) { }
+    void output(TInfoSink&, bool) { }
 
     bool isEsProfile() const { return false; }
     bool getXfbMode() const { return false; }
@@ -664,7 +664,7 @@ public:
     bool usingVulkanMemoryModel() const { return false; }
     bool usingPhysicalStorageBuffer() const { return false; }
     bool usingVariablePointers() const { return false; }
-    unsigned getXfbStride(int buffer) const { return 0; }
+    unsigned getXfbStride(int) const { return 0; }
     bool hasLayoutDerivativeModeNone() const { return false; }
     ComputeDerivativeMode getLayoutDerivativeModeNone() const { return LayoutDerivativeNone; }
 #else
@@ -1117,7 +1117,7 @@ public:
     bool getArithemeticInt8Enabled() const { return false; }
     bool getArithemeticInt16Enabled() const { return false; }
     bool getArithemeticFloat16Enabled() const { return false; }
-    void updateNumericFeature(TNumericFeatures::feature f, bool on) { }
+    void updateNumericFeature(TNumericFeatures::feature, bool) { }
 #else
     bool getArithemeticInt8Enabled() const {
         return numericFeatures.contains(TNumericFeatures::shader_explicit_arithmetic_types) ||

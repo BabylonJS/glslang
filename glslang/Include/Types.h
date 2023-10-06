@@ -98,7 +98,7 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
     bool isImageClass()  const { return false; }
     bool isMultiSample() const { return false; }
     bool isExternal()    const { return false; }
-    void setExternal(bool e) { }
+    void setExternal(bool) { }
     bool isYuv()         const { return false; }
 #else
     unsigned int vectorSize : 3;  // vector return type size.
@@ -873,7 +873,7 @@ public:
 #ifdef GLSLANG_WEB
     bool isPerView() const { return false; }
     bool isTaskMemory() const { return false; }
-    bool isArrayedIo(EShLanguage language) const { return false; }
+    bool isArrayedIo(EShLanguage) const { return false; }
 #else
     bool isPerPrimitive() const { return perPrimitiveNV; }
     bool isPerView() const { return perViewNV; }
@@ -1234,7 +1234,7 @@ public:
         }
     }
 #ifdef GLSLANG_WEB
-    static const char* getLayoutFormatString(TLayoutFormat f) { return "none"; }
+    static const char* getLayoutFormatString(TLayoutFormat) { return "none"; }
 #else
     static const char* getLayoutFormatString(TLayoutFormat f)
     {
@@ -2257,8 +2257,8 @@ public:
     }
 
 #ifdef GLSLANG_WEB
-    TString getCompleteString(bool syntactic = false, bool getQualifiers = true, bool getPrecision = true,
-                              bool getType = true, TString name = "", TString structName = "") const
+    TString getCompleteString(bool = false, bool = true, bool = true,
+                              bool = true, TString = "", TString = "") const
     {
         return "";
     }
