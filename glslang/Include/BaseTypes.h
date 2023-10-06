@@ -342,8 +342,8 @@ enum TPrecisionQualifier {
 };
 
 #ifdef GLSLANG_WEB
-__inline const char* GetStorageQualifierString(TStorageQualifier q) { return ""; }
-__inline const char* GetPrecisionQualifierString(TPrecisionQualifier p) { return ""; }
+__inline const char* GetStorageQualifierString(TStorageQualifier) { return ""; }
+__inline const char* GetPrecisionQualifierString(TPrecisionQualifier) { return ""; }
 #else
 // These will show up in error messages
 __inline const char* GetStorageQualifierString(TStorageQualifier q)
