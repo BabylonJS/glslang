@@ -4943,6 +4943,7 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
     if (version >= 130 && spvVersion.vulkan == 0)
             stageBuiltins[EShLangVertex].append(
                 "int gl_VertexID;"            // needs qualifier fixed later
+                "int gl_InstanceID;"
                 );
 #endif
 
@@ -5236,19 +5237,19 @@ void TBuiltIns::initialize(int version, EProfile profile, const SpvVersion& spvV
                     );
 #ifndef GLSLANG_WEB
             if (version < 310)
-#endif
                 stageBuiltins[EShLangVertex].append(
                     "highp vec4  gl_Position;"    // needs qualifier fixed later
                     "highp float gl_PointSize;"   // needs qualifier fixed later
                     );
-#ifndef GLSLANG_WEB
             else
+#endif
                 stageBuiltins[EShLangVertex].append(
                     "out gl_PerVertex {"
                         "highp vec4  gl_Position;"    // needs qualifier fixed later
                         "highp float gl_PointSize;"   // needs qualifier fixed later
                     "};"
                     );
+#ifndef GLSLANG_WEB
         }
     }
 
@@ -7843,12 +7844,10 @@ void TBuiltIns::identifyBuiltIns(int version, EProfile profile, const SpvVersion
             BuiltInVariable("gl_InstanceIndex", EbvInstanceIndex, symbolTable);
         }
 
-#ifdef GLSLANG_WEB
         if (spvVersion.vulkan == 0) {
             SpecialQualifier("gl_VertexID",   EvqVertexId,   EbvVertexId,   symbolTable);
             SpecialQualifier("gl_InstanceID", EvqInstanceId, EbvInstanceId, symbolTable);
         }
-#endif
 
 #ifndef GLSLANG_WEB
         if (spvVersion.vulkan > 0 && spvVersion.vulkanRelaxed) {

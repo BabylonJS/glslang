@@ -33,7 +33,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 
-#ifndef GLSLANG_WEB
 
 //
 // GL_EXT_spirv_intrinsics
@@ -53,6 +52,8 @@ bool TSpirvTypeParameter::operator==(const TSpirvTypeParameter& rhs) const
     assert(type != nullptr);
     return *type == *rhs.type;
 }
+
+#ifndef GLSLANG_WEB
 
 //
 // Handle SPIR-V requirements
@@ -198,77 +199,6 @@ void TQualifier::setSpirvDecorateString(int decoration, const TIntermAggregate* 
     spirvDecorate->decorateStrings[decoration] = extraOperands;
 }
 
-TString TQualifier::getSpirvDecorateQualifierString() const
-{
-    assert(spirvDecorate);
-
-    TString qualifierString;
-
-    const auto appendFloat = [&](float f) { qualifierString.append(std::to_string(f).c_str()); };
-    const auto appendInt = [&](int i) { qualifierString.append(std::to_string(i).c_str()); };
-    const auto appendUint = [&](unsigned int u) { qualifierString.append(std::to_string(u).c_str()); };
-    const auto appendBool = [&](bool b) { qualifierString.append(std::to_string(b).c_str()); };
-    const auto appendStr = [&](const char* s) { qualifierString.append(s); };
-
-    const auto appendDecorate = [&](const TIntermTyped* constant) {
-        if (constant->getAsConstantUnion()) {
-            auto& constArray = constant->getAsConstantUnion()->getConstArray();
-            if (constant->getBasicType() == EbtFloat) {
-                float value = static_cast<float>(constArray[0].getDConst());
-                appendFloat(value);
-            } else if (constant->getBasicType() == EbtInt) {
-                int value = constArray[0].getIConst();
-                appendInt(value);
-            } else if (constant->getBasicType() == EbtUint) {
-                unsigned value = constArray[0].getUConst();
-                appendUint(value);
-            } else if (constant->getBasicType() == EbtBool) {
-                bool value = constArray[0].getBConst();
-                appendBool(value);
-            } else if (constant->getBasicType() == EbtString) {
-                const TString* value = constArray[0].getSConst();
-                appendStr(value->c_str());
-            } else
-                assert(0);
-        } else {
-            assert(constant->getAsSymbolNode());
-            appendStr(constant->getAsSymbolNode()->getName().c_str());
-        }
-    };
-
-    for (auto& decorate : spirvDecorate->decorates) {
-        appendStr("spirv_decorate(");
-        appendInt(decorate.first);
-        for (auto extraOperand : decorate.second) {
-            appendStr(", ");
-            appendDecorate(extraOperand);
-        }
-        appendStr(") ");
-    }
-
-    for (auto& decorateId : spirvDecorate->decorateIds) {
-        appendStr("spirv_decorate_id(");
-        appendInt(decorateId.first);
-        for (auto extraOperand : decorateId.second) {
-            appendStr(", ");
-            appendDecorate(extraOperand);
-        }
-        appendStr(") ");
-    }
-
-    for (auto& decorateString : spirvDecorate->decorateStrings) {
-        appendStr("spirv_decorate_string(");
-        appendInt(decorateString.first);
-        for (auto extraOperand : decorateString.second) {
-            appendStr(", ");
-            appendDecorate(extraOperand);
-        }
-        appendStr(") ");
-    }
-
-    return qualifierString;
-}
-
 //
 // Handle SPIR-V type specifiers
 //
@@ -358,6 +288,79 @@ TSpirvInstruction* TParseContext::mergeSpirvInstruction(const TSourceLoc& loc, T
     return spirvInst1;
 }
 
+#endif // GLSLANG_WEB
+
+TString TQualifier::getSpirvDecorateQualifierString() const
+{
+    assert(spirvDecorate);
+
+    TString qualifierString;
+
+    const auto appendFloat = [&](float f) { qualifierString.append(std::to_string(f).c_str()); };
+    const auto appendInt = [&](int i) { qualifierString.append(std::to_string(i).c_str()); };
+    const auto appendUint = [&](unsigned int u) { qualifierString.append(std::to_string(u).c_str()); };
+    const auto appendBool = [&](bool b) { qualifierString.append(std::to_string(b).c_str()); };
+    const auto appendStr = [&](const char* s) { qualifierString.append(s); };
+
+    const auto appendDecorate = [&](const TIntermTyped* constant) {
+        if (constant->getAsConstantUnion()) {
+            auto& constArray = constant->getAsConstantUnion()->getConstArray();
+            if (constant->getBasicType() == EbtFloat) {
+                float value = static_cast<float>(constArray[0].getDConst());
+                appendFloat(value);
+            } else if (constant->getBasicType() == EbtInt) {
+                int value = constArray[0].getIConst();
+                appendInt(value);
+            } else if (constant->getBasicType() == EbtUint) {
+                unsigned value = constArray[0].getUConst();
+                appendUint(value);
+            } else if (constant->getBasicType() == EbtBool) {
+                bool value = constArray[0].getBConst();
+                appendBool(value);
+            } else if (constant->getBasicType() == EbtString) {
+                const TString* value = constArray[0].getSConst();
+                appendStr(value->c_str());
+            } else
+                assert(0);
+        } else {
+            assert(constant->getAsSymbolNode());
+            appendStr(constant->getAsSymbolNode()->getName().c_str());
+        }
+    };
+
+    for (auto& decorate : spirvDecorate->decorates) {
+        appendStr("spirv_decorate(");
+        appendInt(decorate.first);
+        for (auto extraOperand : decorate.second) {
+            appendStr(", ");
+            appendDecorate(extraOperand);
+        }
+        appendStr(") ");
+    }
+
+    for (auto& decorateId : spirvDecorate->decorateIds) {
+        appendStr("spirv_decorate_id(");
+        appendInt(decorateId.first);
+        for (auto extraOperand : decorateId.second) {
+            appendStr(", ");
+            appendDecorate(extraOperand);
+        }
+        appendStr(") ");
+    }
+
+    for (auto& decorateString : spirvDecorate->decorateStrings) {
+        appendStr("spirv_decorate_string(");
+        appendInt(decorateString.first);
+        for (auto extraOperand : decorateString.second) {
+            appendStr(", ");
+            appendDecorate(extraOperand);
+        }
+        appendStr(") ");
+    }
+
+    return qualifierString;
+}
+
 } // end namespace glslang
 
-#endif // GLSLANG_WEB
+
