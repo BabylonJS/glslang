@@ -85,8 +85,6 @@ struct TSampler {   // misnomer now; includes images, textures without sampler, 
     bool      image : 1;  // image, combined should be false
     bool   combined : 1;  // true means texture is combined with a sampler, false means texture with no sampler
     bool    sampler : 1;  // true means a pure sampler, other fields should be clear()
-
-
     unsigned int vectorSize : 3;  // vector return type size.
     // Some languages support structures as sample results.  Storing the whole structure in the
     // TSampler is too large, so there is an index to a separate table.
@@ -807,7 +805,6 @@ public:
         }
     }
 
-
     bool isPerPrimitive() const { return perPrimitiveNV; }
     bool isPerView() const { return perViewNV; }
     bool isTaskMemory() const { return perTaskNV; }
@@ -1084,7 +1081,6 @@ public:
     const TSpirvDecorate& getSpirvDecorate() const { assert(spirvDecorate); return *spirvDecorate; }
     TSpirvDecorate& getSpirvDecorate() { assert(spirvDecorate); return *spirvDecorate; }
     TString getSpirvDecorateQualifierString() const;
-
     bool hasSpecConstantId() const
     {
         // Not the same thing as being a specialization constant, this
@@ -1451,7 +1447,6 @@ public:
     // SPIR-V type defined by spirv_type directive
     TSpirvType* spirvType;
 
-
     bool isCoopmat() const { return coopmat; }
 
     void initType(const TSourceLoc& l)
@@ -1466,7 +1461,6 @@ public:
         typeParameters = nullptr;
         coopmat = false;
         spirvType = nullptr;
-
     }
 
     void initQualifiers(bool global = false)

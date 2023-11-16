@@ -41,6 +41,7 @@
 #include "../Include/SpirvIntrinsics.h"
 #include "../Include/Types.h"
 #include "ParseHelper.h"
+
 namespace glslang {
 
 bool TSpirvTypeParameter::operator==(const TSpirvTypeParameter& rhs) const
