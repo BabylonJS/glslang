@@ -334,7 +334,7 @@ GLSLANG_EXPORT glslang_shader_t* glslang_shader_create(const glslang_input_t* in
 GLSLANG_EXPORT void glslang_shader_set_preamble(glslang_shader_t* shader, const char* s) {
     shader->shader->setPreamble(s);
 }
-
+#if !defined(GLSLANG_WEB)
 GLSLANG_EXPORT void glslang_shader_shift_binding(glslang_shader_t* shader, glslang_resource_type_t res, unsigned int base)
 {
     const glslang::TResourceType res_type = glslang::TResourceType(res);
@@ -361,7 +361,7 @@ GLSLANG_EXPORT void glslang_shader_set_options(glslang_shader_t* shader, int opt
         shader->shader->setEnvInputVulkanRulesRelaxed();
     }
 }
-
+#endif
 GLSLANG_EXPORT void glslang_shader_set_glsl_version(glslang_shader_t* shader, int version)
 {
     shader->shader->setOverrideVersion(version);
@@ -371,7 +371,7 @@ GLSLANG_EXPORT const char* glslang_shader_get_preprocessed_code(glslang_shader_t
 {
     return shader->preprocessedGLSL.c_str();
 }
-
+#if !defined(GLSLANG_WEB)
 GLSLANG_EXPORT int glslang_shader_preprocess(glslang_shader_t* shader, const glslang_input_t* input)
 {
     DirStackFileIncluder dirStackFileIncluder;
@@ -390,7 +390,7 @@ GLSLANG_EXPORT int glslang_shader_preprocess(glslang_shader_t* shader, const gls
         Includer
     );
 }
-
+#endif
 GLSLANG_EXPORT int glslang_shader_parse(glslang_shader_t* shader, const glslang_input_t* input)
 {
     const char* preprocessedCStr = shader->preprocessedGLSL.c_str();
