@@ -2681,6 +2681,14 @@ inline void HasResultAndType(Op opcode, bool *hasResult, bool *hasResultType) {
 #endif /* SPV_ENABLE_UTILITY_CODE */
 
 // Overload bitwise operators for mask bit combining
+//
+// Bit-combining operations on SPIR-V mask enums routinely produce values that
+// are not among the individual enumerators (e.g. `~MaskX` or `A | B`). Under
+// -fsanitize=enum this is diagnosed as UB. Suppress the check on just these
+// operator functions; the pattern is intentional.
+#if defined(__clang__)
+#pragma clang attribute push (__attribute__((no_sanitize("enum"))), apply_to = function)
+#endif
 
 inline ImageOperandsMask operator|(ImageOperandsMask a, ImageOperandsMask b) { return ImageOperandsMask(unsigned(a) | unsigned(b)); }
 inline ImageOperandsMask operator&(ImageOperandsMask a, ImageOperandsMask b) { return ImageOperandsMask(unsigned(a) & unsigned(b)); }
@@ -2722,6 +2730,10 @@ inline FragmentShadingRateMask operator|(FragmentShadingRateMask a, FragmentShad
 inline FragmentShadingRateMask operator&(FragmentShadingRateMask a, FragmentShadingRateMask b) { return FragmentShadingRateMask(unsigned(a) & unsigned(b)); }
 inline FragmentShadingRateMask operator^(FragmentShadingRateMask a, FragmentShadingRateMask b) { return FragmentShadingRateMask(unsigned(a) ^ unsigned(b)); }
 inline FragmentShadingRateMask operator~(FragmentShadingRateMask a) { return FragmentShadingRateMask(~unsigned(a)); }
+
+#if defined(__clang__)
+#pragma clang attribute pop
+#endif
 
 }  // end namespace spv
 
